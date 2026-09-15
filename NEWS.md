@@ -1,5 +1,6 @@
 ## Version `v4.1.0` (in progress)
 ### Changes:
+* Make ingress/egress web client timeouts (connect, keep-alive, idle, read-idle, write-idle) configurable via new `WEB_CLIENT_INGRESS_TIMEOUT_*` and `WEB_CLIENT_EGRESS_TIMEOUT_*` environment variables ([MODSIDECAR-207](https://folio-org.atlassian.net/browse/MODSIDECAR-207))
 * Default `handler.egress.ignore-system-user-token-error` to `false`: fail when a required system-user token cannot be obtained on egress instead of forwarding without `x-okapi-token`. Set it to `true` per sidecar (e.g. `mod-users-keycloak`, which has no system user) to keep forwarding token-less ([MODSIDECAR-197](https://folio-org.atlassian.net/browse/MODSIDECAR-197), [EUREKASUP-169](https://folio-org.atlassian.net/browse/EUREKASUP-169))
 * Invalidate system token cache on egress 401 and return 503 with Retry-After header ([MODSIDECAR-178](https://folio-org.atlassian.net/browse/MODSIDECAR-178))
 * Adjust Keycloak error handling ([MODSIDECAR-192](https://folio-org.atlassian.net/browse/MODSIDECAR-192))
