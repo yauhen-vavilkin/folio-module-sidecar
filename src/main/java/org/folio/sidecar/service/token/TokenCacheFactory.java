@@ -1,7 +1,9 @@
 package org.folio.sidecar.service.token;
 
+import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofSeconds;
 import static java.util.Objects.requireNonNull;
+import static org.apache.commons.lang3.math.NumberUtils.max;
 import static org.folio.sidecar.utils.TokenUtils.tokenResponseAsString;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -74,12 +76,20 @@ public class TokenCacheFactory {
 
     // invalidating a cache entry prior to the token expiration.
     var earlyExpiresIn = expiresIn - refreshBeforeExpiry;
-    var duration = earlyExpiresIn > MIN_EARLY_EXPIRATION_SEC ? ofSeconds(earlyExpiresIn) : ofSeconds(expiresIn);
+    var duration = earlyExpiresIn > MIN_EARLY_EXPIRATION_SEC
+      ? ofSeconds(earlyExpiresIn)
+      : ofMillis(minusTenPercent(expiresIn * 1000));
     var ttlNanos = Math.max(duration.toNanos(), 0);
     log.debug("Token TTL calculated: duration = {} secs, token = {}",
       () -> ttlNanos / 1_000_000_000L, () -> tokenResponseAsString(token));
 
     return ttlNanos;
+  }
+
+  private long minusTenPercent(Long expiresInMillis) {
+    var fraction = expiresInMillis / 10;
+    var result = expiresInMillis - max(fraction, 1);
+    return max(result, 1);
   }
 
   private static RemovalListener<String, TokenResponse> refreshOnExpiration(
