@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import org.folio.sidecar.configuration.properties.TokenCacheProperties;
 import org.folio.sidecar.integration.keycloak.model.TokenResponse;
@@ -37,6 +38,31 @@ class TokenCacheFactoryTest {
 
     var actual = factory.createCache();
     assertThat(actual).isNotNull();
+  }
+
+  @Test
+  void createCache_expiration_positive_standardEarlyExpiration() {
+    assertTtlApproximately(3600, 60, 3_540_000);
+  }
+
+  @Test
+  void createCache_expiration_positive_fallbackNearExpiry() {
+    assertTtlApproximately(3600, 3595, 3_240_000);
+  }
+
+  @Test
+  void createCache_expiration_positive_atMinimumEarlyExpiration() {
+    assertTtlApproximately(3600, 3570, 3_240_000);
+  }
+
+  @Test
+  void createCache_expiration_positive_justAboveMinimumEarlyExpiration() {
+    assertTtlApproximately(3600, 3569, 31_000);
+  }
+
+  @Test
+  void createCache_expiration_positive_shortToken() {
+    assertTtlApproximately(1, 1, 900);
   }
 
   @Test
@@ -74,6 +100,20 @@ class TokenCacheFactoryTest {
     assertThatThrownBy(() -> new TokenCacheFactory(cacheProperties))
       .isInstanceOf(NullPointerException.class)
       .hasMessage("Token cache refresh before expiry must be set");
+  }
+
+  private static void assertTtlApproximately(int expiresIn, int refreshBeforeExpiry, long expectedMillis) {
+    var properties = new TokenCacheProperties();
+    properties.setInitialCapacity(1);
+    properties.setMaxCapacity(1);
+    properties.setRefreshBeforeExpirySeconds(refreshBeforeExpiry);
+
+    var factory = new TokenCacheFactory(properties);
+    var token = new TokenResponse();
+    token.setExpiresIn((long) expiresIn);
+
+    var actualMillis = TimeUnit.NANOSECONDS.toMillis(factory.calculateTtl(token));
+    assertThat(actualMillis).isEqualTo(expectedMillis);
   }
 
   private static BiConsumer<String, TokenResponse> refreshFunction() {
