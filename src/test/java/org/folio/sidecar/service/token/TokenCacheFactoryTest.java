@@ -108,15 +108,12 @@ class TokenCacheFactoryTest {
     properties.setMaxCapacity(1);
     properties.setRefreshBeforeExpirySeconds(refreshBeforeExpiry);
 
-    var cache = new TokenCacheFactory(properties).createCache();
+    var factory = new TokenCacheFactory(properties);
     var token = new TokenResponse();
     token.setExpiresIn((long) expiresIn);
-    cache.put("tenant", token);
 
-    var actualMillis = cache.policy().expireVariably().orElseThrow()
-      .getExpiresAfter("tenant", TimeUnit.MILLISECONDS).orElseThrow();
-    var tolerance = Math.max(100, expectedMillis / 100);
-    assertThat(actualMillis).isBetween(expectedMillis - tolerance, expectedMillis);
+    var actualMillis = TimeUnit.NANOSECONDS.toMillis(factory.calculateTtl(token));
+    assertThat(actualMillis).isEqualTo(expectedMillis);
   }
 
   private static BiConsumer<String, TokenResponse> refreshFunction() {
