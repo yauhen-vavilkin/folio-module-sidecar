@@ -67,7 +67,7 @@ public class TokenCacheFactory {
     return builder.build();
   }
 
-  private long calculateTtl(TokenResponse token) {
+  long calculateTtl(TokenResponse token) {
     var expiresIn = token.getExpiresIn();
     var refreshBeforeExpiry = cacheProperties.getRefreshBeforeExpirySeconds();
 
