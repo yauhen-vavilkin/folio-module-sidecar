@@ -1,0 +1,15 @@
+{
+  "id": "app-sidecar-${project.version}",
+  "name": "app-sidecar",
+  "version": "${project.version}",
+  "description": "Virtual application that carries the FOLIO module sidecar descriptor",
+  "modules": [
+    {
+      "id": "folio-module-sidecar-${project.version}",
+      "name": "folio-module-sidecar",
+      "version": "${project.version}"
+    }
+  ],
+  "uiModules": [],
+  "dependencies": []
+}

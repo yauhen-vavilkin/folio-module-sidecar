@@ -1,0 +1,31 @@
+{
+  "id": "folio-module-sidecar-${project.version}",
+  "name": "folio-module-sidecar",
+  "description": "Dependency-only descriptor of the FOLIO module sidecar, used to validate its Kafka and manager-service dependencies",
+  "requires": [
+    {
+      "id": "mgr-applications",
+      "version": "1.0"
+    },
+    {
+      "id": "mgr-tenant-entitlements",
+      "version": "1.0"
+    },
+    {
+      "id": "mgr-tenants",
+      "version": "1.0"
+    }
+  ],
+  "consumesEvents": [
+    {
+      "eventName": "discovery"
+    },
+    {
+      "eventName": "entitlement"
+    },
+    {
+      "eventName": "mod-login-keycloak.logout",
+      "optional": true
+    }
+  ]
+}

@@ -558,3 +558,32 @@ This feature can be disabled via the `ROUTING_MODULE_ENTITLEMENT_ENABLED` enviro
 
 ## AI Documentation
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/folio-org/folio-module-sidecar)
+
+## Sidecar Module and Application Descriptors
+
+The build generates a dependency-only sidecar module descriptor and an `app-sidecar` application descriptor
+(default `regular` scope) in `target/descriptors/` from the templates in `src/main/descriptors/`. Both are versioned
+with the sidecar release (`folio-module-sidecar-{version}`, `app-sidecar-{version}`).
+
+The module descriptor declares `requires` for `mgr-applications`, `mgr-tenant-entitlements` and `mgr-tenants`, and
+`consumesEvents` for the `discovery`, `entitlement` and (optional) `mod-login-keycloak.logout` events. It has no
+`provides`, `permissionSets` or `producesEvents`.
+
+### Depending on `app-sidecar`
+
+An application that relies on the sidecar declares `app-sidecar` in its application descriptor `dependencies`:
+
+```json
+{
+  "id": "app-example-1.0.0",
+  "name": "app-example",
+  "version": "1.0.0",
+  "dependencies": [
+    { "name": "app-sidecar", "version": "^4.1.0" }
+  ]
+}
+```
+
+Entitling such an application to a tenant succeeds only if `app-sidecar` (in a matching version) is already
+entitled to that tenant; otherwise entitlement fails on the missing application dependency. Different tenants may
+entitle different `app-sidecar` versions.
