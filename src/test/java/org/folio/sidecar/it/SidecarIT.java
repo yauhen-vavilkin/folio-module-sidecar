@@ -187,8 +187,11 @@ class SidecarIT {
       );
   }
 
+  /**
+   * Duplicate headers that are not prefixed with {@code x-okapi-} are still allowed.
+   */
   @Test
-  void handleIngressRequest_positive_duplicatedHeader() {
+  void handleIngressRequest_positive_duplicatedNonOkapiHeader() {
     TestUtils.givenJson()
       .header(OkapiHeaders.TENANT, TestConstants.TENANT_NAME)
       .header(OkapiHeaders.AUTHORIZATION, "Bearer " + authToken)
@@ -205,6 +208,27 @@ class SidecarIT {
         "id", is("d12c8c0c-d387-4bd5-9ad6-c02b41abe4ec"),
         "name", is("Test entity"),
         "description", is("A Test entity description")
+      );
+  }
+
+  @Test
+  void handleIngressRequest_negative_duplicatedOkapiHeader() {
+    TestUtils.givenJson()
+      .header(OkapiHeaders.TENANT, TestConstants.TENANT_NAME)
+      .header(OkapiHeaders.TENANT, "duplicated")
+      .header(OkapiHeaders.AUTHORIZATION, "Bearer " + authToken)
+      .get("/foo/entities")
+      .then()
+      .log().ifValidationFails(LogDetail.ALL)
+      .assertThat()
+      .statusCode(is(SC_BAD_REQUEST))
+      .header(TestConstants.SIDECAR_SIGNATURE_HEADER, nullValue())
+      .contentType(is(APPLICATION_JSON))
+      .body(
+        "total_records", is(1),
+        "errors[0].type", is("BadRequestException"),
+        "errors[0].code", is("service_error"),
+        "errors[0].message", is("Request contains duplicate x-okapi-* headers: " + OkapiHeaders.TENANT)
       );
   }
 
