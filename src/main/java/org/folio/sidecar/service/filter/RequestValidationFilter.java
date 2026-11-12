@@ -10,23 +10,42 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.BadRequestException;
+import java.util.List;
+import java.util.Locale;
+import org.folio.sidecar.integration.okapi.OkapiHeaders;
 
 @ApplicationScoped
 public class RequestValidationFilter implements IngressRequestFilter {
 
   private static final String CONTENT_LENGTH_HEADER = "Content-Length";
+  private static final String OKAPI_HEADERS_PREFIX = OkapiHeaders.PREFIX.toLowerCase(Locale.ROOT) + '-';
 
   @Override
   public Future<RoutingContext> filter(RoutingContext rc) {
-    if (HttpMethod.GET.equals(rc.request().method()) && isContentLengthByHeaderExist(rc.request().headers())) {
+    var headers = rc.request().headers();
+    if (HttpMethod.GET.equals(rc.request().method()) && isContentLengthByHeaderExist(headers)) {
       return failedFuture(new BadRequestException("GET requests should not have a body"));
     }
+
+    var duplicatedHeaders = findDuplicatedOkapiHeaders(headers);
+    if (!duplicatedHeaders.isEmpty()) {
+      return failedFuture(new BadRequestException(
+        "Request contains duplicate x-okapi-* headers: " + String.join(", ", duplicatedHeaders)));
+    }
+
     return succeededFuture(rc);
   }
 
   @Override
   public int getOrder() {
     return REQUEST_VALIDATION.getOrder();
+  }
+
+  private List<String> findDuplicatedOkapiHeaders(MultiMap headers) {
+    return headers.names().stream()
+      .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(OKAPI_HEADERS_PREFIX))
+      .filter(name -> headers.getAll(name).size() > 1)
+      .toList();
   }
 
   private boolean isContentLengthByHeaderExist(MultiMap headers) {
